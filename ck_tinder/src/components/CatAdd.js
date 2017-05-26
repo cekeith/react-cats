@@ -1,45 +1,66 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
+import {updateCats} from '../actions'
+
 
 class CatAdd extends Component {
-  constructor(){
-    super()
-      this.state={
-          cat: {
-          color: '',
-          breed: '',
-          gender: 'Male',
-          habitat: 'Indoor',
-          personality: '',
-          age: '',
-        }
-      }
-    }
-  handleChange(e){
-    const target = e.target
-    const attribute = target.name
-    var cat = this.state.cat
-    cat[attribute] = target.value
-    this.setState({cat:cat})
-  }
-  handleSubmit(e){
-    e.preventDefault()
-    const params = {
-      method: "POST",
-      headers:  {
-      'Content-Type': 'application/json'
+  constructor(props){
+    super(props)
+    this.state={
+        cat: {
+        color: '',
+        breed: '',
+        gender: 'Male',
+        habitat: 'Indoor',
+        personality: '',
+        age: ''
       },
+      message: ''
+    }
+  }
+  handleChange(e){
+    let target = e.target
+    let cat = this.state.cat
+    cat[target.name] = target.value
+    this.setState({
+      cat: cat
+    })
+  }
+
+  handleSubmit(e){
+    var appScope = this
+    e.preventDefault()
+    // set up the headers and request
+    const params = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(this.state)
     }
-    fetch('http://localhost:4000/create_cat', params).then((response)=>{
-      if(response.ok){
-        response.json().then((body)=>{
-          this.setState({cat: body.cat})
+    
+    // send state to the backend server
+    fetch("http://localhost:4000/create_cat", params).then(function(response){
+      // if post is successful update the message to be successful
+      // and update the state to equal what we get back from the server
+      if(response.status === 200){
+        response.json().then(function(body){
+          appScope.setState({
+            cat: body.cat,
+            message: 'successfully created cat profile'
+          })
+          updateCats()
         })
-      }else{
-        console.log("error")
+      } else {
+        this.setState({
+          message: 'error'
+        })
+        // else update the message to say there was a failure
       }
+    }).catch(function(error){
+      this.setState({
+        message: 'there was an error: ' + error.errors.join("\n")
+      })
     })
+
   }
   render(){
     return(
@@ -102,5 +123,6 @@ class CatAdd extends Component {
       </div>
       )
     }
-}
+  }
+
 export default CatAdd;
